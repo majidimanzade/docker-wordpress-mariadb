@@ -1,0 +1,49 @@
+version: '3'
+services:
+  wordpress:
+    container_name: wordpress
+    depends_on:
+      - db
+    build:
+      context: wordpress
+    stdin_open: true
+    tty: true
+    restart: always
+    environment:
+        WORDPRESS_DB_HOST: db
+        WORDPRESS_DB_USER: ${DB_USERNAME}
+        WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
+        WORDPRESS_DB_NAME: ${DB_DATABASE}
+    volumes:
+        - ./wordpress:/var/www/html
+  webserver:
+    image: nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    volumes:
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+  db:
+    image: mariadb:10.4
+    restart: unless-stopped
+    container_name: db
+    tty: true
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USERNAME: ${DB_USERNAME}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      SERVICE_TAGS: ${SERVICE_TAG}
+      SERVICE_NAME: mariadb
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-network
+volumes: 
+  dbdata: 
+    driver: local 
